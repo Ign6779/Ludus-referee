@@ -2,13 +2,13 @@ import os
 import csv
 
 # Path to the folder containing the images
-images_folder_path = './image_dataset'
+images_folder_path = r"C:\Users\ignac\Documents\InHolland\Year 3\Ludus project\Ludus-referee\siamese\image_dataset"
 
 # The path for the CSV file we will create
-output_csv_path = 'image_pairs.csv'
+output_csv_path = r"C:\Users\ignac\Documents\InHolland\Year 3\Ludus project\Ludus-referee\siamese\image_pairs.csv"
 
-# Get a list of filenames in the images folder, sorted to ensure correct pairing
-image_filenames = sorted(os.listdir(images_folder_path))
+
+image_filenames = os.listdir(images_folder_path)
 
 # Open the CSV file in write mode
 with open(output_csv_path, 'w', newline='') as csvfile:
