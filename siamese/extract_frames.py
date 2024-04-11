@@ -4,7 +4,7 @@ import numpy as np
 import random
 
 # Specify the path to your video and the directory to save frames
-video_path = r'C:\Users\ignac\OneDrive\Documents\InHolland\Year 3\Ludus project\dataset_peer_review\warrior_slap_videos\VID_20240315_154800.mp4'
+video_path = r"C:\Users\ignac\OneDrive\Documents\InHolland\Year 3\Ludus project\dataset_peer_review\warrior_slap_videos\2022-05-05 11.30.50_Camera 1_4.mov"
 frames_save_path = r'C:\Users\ignac\OneDrive\Documents\InHolland\Year 3\Ludus project\image_dataset'
 
 if not os.path.exists(frames_save_path):
@@ -36,7 +36,7 @@ def extract_frame_pairs(video_path, save_dir):
             if not ret:
                 break  # In case we can't read, skip this pair
             
-            frame_save_path = os.path.join(save_dir, f"pair{pairs_extracted}_frame{idx}.jpg")
+            frame_save_path = os.path.join(save_dir, f"vid10_pair{pairs_extracted}_frame{idx}.jpg")
             cv2.imwrite(frame_save_path, frame)
         
         pairs_extracted += 1
