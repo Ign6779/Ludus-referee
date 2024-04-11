@@ -7,7 +7,7 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras import backend as K
 
 
-#basic CNN model - ADAPTED FOR 720p RESOLUTION
+#basic CNN model - ADAPTED FOR 1080p RESOLUTION
 def init_base_network(input_shape):
     input = Input(shape=input_shape, name="base_input")
     
@@ -84,11 +84,14 @@ def train_model(pairs, labels, epochs = 10, batch_size = 32):
     model.compile(loss = contrastive_loss, optimizer = Adam(0.0001))
     model.fit([pairs[:, 0], pairs[:, 1]], labels, epochs = epochs, batch_size = batch_size)
 
-def test_model(pairs, labels):
-    loss, accuracy = model.evaluate([pairs[:, 0], pairs[:, 1]], labels)
-    print(f"Test loss: {loss}, test accuracy: {accuracy}")
-    return loss, accuracy
+def test_model(pairs, labels, threshold=0.5):
+    predictions = model.predict([pairs[:, 0], pairs[:, 1]])
 
+    predictions = (predictions.ravel() <=threshold).astype(int)
+
+    accuracy = np.mean(predictions == labels)
+    print(f"test accuracy: {accuracy * 100:2f}%")
+    return accuracy
 
 #to actually use the model
 def analyze_video(reference_image_path, video_path, threshold = 0.05):
