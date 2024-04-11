@@ -7,8 +7,9 @@ from sklearn.model_selection import train_test_split
 def load_and_preprocess_image(image_path, target_size=(1920, 1080)):
     # Load the image in grayscale
     image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-    # Resize the image
-    image = cv2.resize(image, target_size)
+    # Resize the image - ensure the order matches what the model expects
+    # Swap the dimensions for resizing because cv2.resize expects (width, height)
+    image = cv2.resize(image, (target_size[1], target_size[0]))
     # Expand dimensions to add the channel information
     image = np.expand_dims(image, axis=-1)
     # Normalize pixel values to [0, 1]
@@ -40,7 +41,7 @@ def prepare_data(csv_path, images_folder):
     labels = np.array(labels, dtype='float32')
     
     # Reshape for the model's expected input
-    pairs = pairs.transpose((0, 2, 3, 1, 4)).reshape((-1, 1080, 1920, 1))
+    #pairs = pairs.transpose((0, 2, 3, 1, 4)).reshape((-1, 1080, 1920, 1))
     
     return pairs, labels
 
@@ -55,8 +56,8 @@ x_train, x_test, y_train, y_test = train_test_split(pairs, labels, test_size=0.2
 # Now, train your model
 print("model training")
 print()
-siamnet.train_model([x_train[:, 0], x_train[:, 1]], y_train, epochs=10, batch_size=32)
+siamnet.train_model(x_train[:, 0], x_train[:, 1], y_train, epochs=10, batch_size=32)
 print("model has been trained")
 print()
 print("model testing")
-siamnet.test_model([x_test[:, 0], x_test[:, 1]], y_test)
+siamnet.test_model(x_test[:, 0], x_test[:, 1], y_test)
