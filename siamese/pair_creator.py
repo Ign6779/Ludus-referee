@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import cv2
 import siamese_networks as siamnet
+import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 
 def load_and_preprocess_image(image_path, target_size=(1920, 1080)):
@@ -45,6 +46,7 @@ def prepare_data(csv_path, images_folder):
     
     return pairs, labels
 
+
 # Assuming 'images_folder' is the path to your images folder and 'csv_path' is the path to your CSV file
 pairs, labels = prepare_data(r"C:\Users\ignac\Documents\InHolland\Year 3\Ludus project\Ludus-referee\siamese\image_pairs.csv", r"C:\Users\ignac\Documents\InHolland\Year 3\Ludus project\Ludus-referee\siamese\image_dataset")
 
@@ -56,8 +58,34 @@ x_train, x_test, y_train, y_test = train_test_split(pairs, labels, test_size=0.2
 # Now, train your model
 print("model training")
 print()
-siamnet.train_model(x_train[:, 0], x_train[:, 1], y_train, epochs=10, batch_size=32)
+history = siamnet.train_model(x_train[:, 0], x_train[:, 1], y_train, 60, 16)
 print("model has been trained")
 print()
 print("model testing")
 siamnet.test_model(x_test[:, 0], x_test[:, 1], y_test)
+
+siamnet.analyze_image(load_and_preprocess_image(r"C:\Users\ignac\Documents\InHolland\Year 3\Ludus project\temp\vid10_pair8_frame383.jpg"), load_and_preprocess_image(r"C:\Users\ignac\Documents\InHolland\Year 3\Ludus project\temp\vid10_pair8_frame428.jpg"), 0.1)
+
+# Plot training & validation loss values
+plt.figure(figsize=(10, 4))
+plt.subplot(1, 2, 1)
+plt.plot(history.history['loss'])
+if 'val_loss' in history.history:
+    plt.plot(history.history['val_loss'])
+plt.title('Model Loss')
+plt.ylabel('Loss')
+plt.xlabel('Epoch')
+plt.legend(['Train', 'Validation'], loc='upper left')
+
+# Plot training & validation accuracy
+plt.subplot(1, 2, 2)
+plt.plot(history.history['lambda'])
+if 'val_lambda' in history.history:
+    plt.plot(history.history['val_lambda'])
+plt.title('Model Accuracy')
+plt.ylabel('Accuracy')
+plt.xlabel('Epoch')
+plt.legend(['Train', 'Validation'], loc='upper left')
+
+plt.tight_layout()
+plt.show()

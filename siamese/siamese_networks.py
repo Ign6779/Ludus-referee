@@ -1,10 +1,13 @@
 import numpy as np
 import tensorflow as tf
 import cv2
+import time
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, Flatten, Dense, Lambda, Dropout
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras import backend as K
+from tensorflow.keras.callbacks import Callback
+from tensorflow.keras.applications import VGG16
 
 
 #basic CNN model - ADAPTED FOR 1080p RESOLUTION
@@ -40,6 +43,17 @@ def init_base_network(input_shape):
     return Model(inputs=input, outputs=x)
 
 
+#alternate model 
+def init_vgg16(input_shape):
+    vgg_model = VGG16(
+        include_top=True,
+        weights='imagenet',
+        input_tensor=None,
+        input_shape=input_shape,
+        pooling=None,
+        classes=2,
+        classifier_activation='relu'
+    )
 #this is how siamese networks compare
 def euclidean_distance(vectors):
     #calculates the Euclidean distance between two vectors
@@ -79,20 +93,42 @@ def contrastive_loss(y_true, y_pred):
     margin_square = K.square(K.maximum(margin - y_pred, 0))
     return K.mean(y_true * square_pred + (1 - y_true) * margin_square)
 
-#compile model and train
-def train_model(x_train1, x_train2, labels, epochs=10, batch_size=32):
-    model.compile(loss=contrastive_loss, optimizer=Adam(0.0001))
-    model.fit([x_train1, x_train2], labels, epochs=epochs, batch_size=batch_size)
+def binary_accuracy(y_true, y_pred, threshold):
+    y_pred_thresholded = tf.cast(y_pred < threshold, y_true.dtype)
+    return K.mean(K.equal(y_true, y_pred_thresholded))
 
-def test_model(x_test1, x_test2, labels, threshold=0.5):
+#compile model and train
+def train_model(x_train1, x_train2, labels, epochs, batch_size, threshold=0.1):
+    model.compile(loss=contrastive_loss, optimizer=Adam(0.0001),
+                  metrics=[lambda y_true, y_pred: binary_accuracy(y_true, y_pred, threshold=threshold)])
+    
+    history = model.fit([x_train1, x_train2], labels, epochs=epochs, batch_size=batch_size)
+    
+    return history
+
+def test_model(x_test1, x_test2, labels, threshold=0.1):
+    # First, predict using the model
     predictions = model.predict([x_test1, x_test2])
     predictions = (predictions.ravel() <= threshold).astype(int)
-    accuracy = np.mean(predictions == labels)
-    print(f"Test accuracy: {accuracy * 100:.2f}%")
-    return accuracy
+
+    # Evaluate the model to get both loss and custom accuracy
+    loss, accuracy = model.evaluate([x_test1, x_test2], labels, verbose=0)
+
+    # Convert custom accuracy to percentage for consistency with manual calculation
+    accuracy_percentage = accuracy * 100
+
+    # Print results
+    print(f"Test loss: {loss:.4f}")
+    print(f"Test accuracy (metric): {accuracy_percentage:.2f}%")
+
+    # Compute manual accuracy
+    manual_accuracy = np.mean(predictions == labels)
+    print(f"Test accuracy (manual): {manual_accuracy * 100:.2f}%")
+    
+    return accuracy, loss
 
 #to actually use the model
-def analyze_video(reference_image_path, video_path, threshold = 0.05):
+def analyze_video(reference_image_path, video_path, threshold = 0.1):
     #load reference and process it
     reference_image = cv2.imread(reference_image_path, cv2.IMREAD_GRAYSCALE)
     
@@ -114,22 +150,19 @@ def analyze_video(reference_image_path, video_path, threshold = 0.05):
     return True
 
 
-def analyze_image(image_path1, image_path2, threshold=0.05):
-    image1 = cv2.imread(image_path1, cv2.IMREAD_GRAYSCALE)
-    #image1 = cv2.resize(image1, (1920, 1080))
+def analyze_image(image1, image2, threshold):
+    start_time = time.time()
 
-    image2 = cv2.imread(image_path2, cv2.IMREAD_GRAYSCALE)
-    #image2 = cv2.resize(image2, (1920, 1080))
+    distance = model.predict([np.expand_dims(image1, axis = 0), np.expand_dims(image2, axis=0)])
 
-    image1 = np.expand_dims(image1, axis=0)
-    image1 = np.expand_dims(image1, axis=-1)
+    end_time = time.time()
+    elapsed_time = end_time - start_time
 
-    image2 = np.expand_dims(image2, axis=0)
-    image2 = np.expand_dims(image2, axis=-1)
-
-    distance = model.predict([image1, image2])
+    print(f"Prediction time: {elapsed_time:.4f} seconds")
 
     if distance <= threshold:
+        print("Images are similar")
         return True
     else:
+        print("Images are different")
         return False

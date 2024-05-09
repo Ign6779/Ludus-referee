@@ -4,8 +4,8 @@ import numpy as np
 import random
 
 # Specify the path to your video and the directory to save frames
-video_path = r"C:\Users\ignac\OneDrive\Documents\InHolland\Year 3\Ludus project\dataset_peer_review\warrior_slap_videos\2022-05-05 11.30.50_Camera 1_4.mov"
-frames_save_path = r'C:\Users\ignac\OneDrive\Documents\InHolland\Year 3\Ludus project\image_dataset'
+video_path = r"C:\Users\ignac\Documents\InHolland\Year 3\Ludus project\dataset_ludus\2022-05-05 11.32.11_Camera 1_6.mov"
+frames_save_path = r"C:\Users\ignac\Documents\InHolland\Year 3\Ludus project\temp"
 
 if not os.path.exists(frames_save_path):
     os.makedirs(frames_save_path)
